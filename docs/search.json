@@ -1,0 +1,233 @@
+[
+  {
+    "objectID": "lab/voice_lab.html",
+    "href": "lab/voice_lab.html",
+    "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
+    "section": "",
+    "text": "How to use this notebook (50 minutes)\n\n\n\nThis is the compressed, one-afternoon version of the 5-day GSERM voice analytics course. All code is prepared. You run it, read the output, and fill in the chunks marked YOUR TURN. Each exercise has a folded solution: try first, then peek.\n\n\n\n\n\n\n\n\nBlock\nTime\nWhat you do\n\n\n\n\n0 · Setup\n3′\nLoad packages, check the audio plays\n\n\n1 · Warm-up\n5′\nThe Alexa example in R (same files as in Audacity)\n\n\n2 · Listen & look\n8′\nExercise 1: calm vs. angry, side by side and on one scale\n\n\n3 · Trim\n5′\nDetect speech onsets and cut silence\n\n\n4 · Extract & compare\n12′\nExercise 2: voiceR::autoExtract() on 32 clips\n\n\n5 · Predict & break it\n10′\nExercise 3: a speaker-independent model on all 192 clips\n\n\n6 · Bonus\n–\nMicrophones, embeddings, speech-to-text\n\n\n\nNot coding today? Read the rendered version of this page on the course website and focus on the interpretation questions."
+  },
+  {
+    "objectID": "lab/voice_lab.html#the-data",
+    "href": "lab/voice_lab.html#the-data",
+    "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
+    "section": "The data",
+    "text": "The data\nWe use the RAVDESS corpus (Livingstone & Russo, 2018). Actors say the same sentence, “Kids are talking by the door”, either calm or angry, at normal or strong intensity, twice. The repository includes the 32 clips of actors 01–04; the precomputed features for all 192 clips (24 actors) are in data/ravdess_features.csv.\nRAVDESS encodes the design in the filename, e.g. 03-01-05-01-01-01-12.wav:\n\n\n\nPosition\nField\nCodes\n\n\n\n\n3\nEmotion\n02 = calm, 05 = angry\n\n\n4\nIntensity\n01 = normal, 02 = strong\n\n\n6\nRepetition\n01, 02\n\n\n7\nActor\n01–24 (odd = male, even = female)\n\n\n\n\nemo_dir   &lt;- file.path(data_dir, \"3_ravdess\")\nemo_files &lt;- list.files(emo_dir, pattern = \"\\\\.wav$\")\n\nparts &lt;- str_split(str_remove(emo_files, \"\\\\.wav$\"), \"-\", simplify = TRUE)\nmeta &lt;- tibble(\n  file      = emo_files,\n  emotion   = if_else(parts[, 3] == \"02\", \"Calm\", \"Angry\"),\n  intensity = if_else(parts[, 4] == \"01\", \"Normal\", \"Strong\"),\n  actor     = as.integer(parts[, 7]),\n  sex       = if_else(actor %% 2 == 0, \"Female\", \"Male\")\n)\ncount(meta, actor, sex, emotion)\n\n\n\n\n\nactor\nsex\nemotion\nn\n\n\n\n\n1\nMale\nAngry\n4\n\n\n1\nMale\nCalm\n4\n\n\n2\nFemale\nAngry\n4\n\n\n2\nFemale\nCalm\n4\n\n\n3\nMale\nAngry\n4\n\n\n3\nMale\nCalm\n4\n\n\n4\nFemale\nAngry\n4\n\n\n4\nFemale\nCalm\n4"
+  },
+  {
+    "objectID": "lab/voice_lab.html#a-first-look-actor-01",
+    "href": "lab/voice_lab.html#a-first-look-actor-01",
+    "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
+    "section": "A first look: actor 01",
+    "text": "A first look: actor 01\n\nex_calm  &lt;- readWave(file.path(emo_dir, \"03-01-02-01-01-01-01.wav\"))\nex_angry &lt;- readWave(file.path(emo_dir, \"03-01-05-01-01-01-01.wav\"))\n# listen(ex_calm); listen(ex_angry)\n\npar(mfrow = c(1, 2))\noscillo(ex_calm,  colwave = \"#115C2E\", title = \"Calm\")\noscillo(ex_angry, colwave = \"#6A1F6E\", title = \"Angry\")\n\n\n\n\n\n\n\n\nCareful: oscillo() and spectro(dB = \"max0\") scale each clip to its own maximum, so side-by-side plots hide the loudness difference. bind() puts both clips on one shared scale:\n\nspectro(bind(ex_calm, ex_angry), flim = c(0, 4), osc = TRUE, dB = \"max0\")\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nExercise 1 · Listen & look (8 minutes, pairs)\n\n\n\n\nPick another actor (02, 03 or 04). Plot their calm vs. angry clip side by side, then on one shared scale with bind().\nWhich cue gives anger away first: amplitude, duration, or where the energy sits in frequency?\nRun timer() with threshold = 5 and threshold = 10 on the calm clip. Which onset matches what you hear?\n\nDeliverable: one sentence naming the cue, plus the threshold you would use.\n\n\n\n# YOUR TURN ---------------------------------------------------------------\n# my_actor &lt;- \"02\"\n# calm  &lt;- readWave(file.path(emo_dir, paste0(\"03-01-02-01-01-01-\", my_actor, \".wav\")))\n# angry &lt;- ...\n\n\n\n\n\n\n\nSolution: Exercise 1\n\n\n\n\n\n\nmy_actor &lt;- \"02\"\ncalm  &lt;- readWave(file.path(emo_dir, paste0(\"03-01-02-01-01-01-\", my_actor, \".wav\")))\nangry &lt;- readWave(file.path(emo_dir, paste0(\"03-01-05-01-01-01-\", my_actor, \".wav\")))\n\nspectro(bind(calm, angry), flim = c(0, 4), osc = TRUE, dB = \"max0\")\n\n\n\n\n\n\n\non5  &lt;- timer(calm, threshold = 5,  plot = FALSE)$s.start[1]\non10 &lt;- timer(calm, threshold = 10, plot = FALSE)$s.start[1]\nc(threshold_5 = on5, threshold_10 = on10)\n\n threshold_5 threshold_10 \n    1.006672     1.116839 \n\n\nThe angry clip has much larger amplitude excursions and more energy above 1 kHz. A low threshold can lock onto low-level noise before speech starts; always check the onset against what you hear."
+  },
+  {
+    "objectID": "lab/voice_lab.html#hear-the-microphone",
+    "href": "lab/voice_lab.html#hear-the-microphone",
+    "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
+    "section": "Hear the microphone",
+    "text": "Hear the microphone\nSame speaker, same text, seven devices (from Busquet, Efthymiou & Hildebrand 2023). Compare the average spectra: which devices roll off the high frequencies?\n\nmic_dir   &lt;- file.path(data_dir, \"2_micTests\")\nmic_files &lt;- list.files(mic_dir, pattern = \"^[0-9]_audio.*\\\\.wav$\")\n\npar(mfrow = c(3, 3), mar = c(4, 4, 2, 1))\nfor (f in mic_files) {\n  w &lt;- readWave(file.path(mic_dir, f))\n  if (w@stereo) w &lt;- mono(w, \"left\")\n  meanspec(w, flim = c(0, 10), main = str_remove(f, \"\\\\.wav$\"), col = \"#115C2E\")\n}"
+  },
+  {
+    "objectID": "lab/voice_lab.html#acoustic-features-vs.-voice-embeddings",
+    "href": "lab/voice_lab.html#acoustic-features-vs.-voice-embeddings",
+    "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
+    "section": "Acoustic features vs. voice embeddings",
+    "text": "Acoustic features vs. voice embeddings\ndata/ravdess_embeddings.csv holds a 768-dimensional embedding per clip from a pre-trained speech model (via talk::talkEmbed() in the full course). Does the black box beat the named features?\n\nemb &lt;- read_csv(file.path(data_dir, \"ravdess_embeddings.csv\"))\ndat &lt;- rav %&gt;% left_join(emb, by = \"file\")\nemb_cols &lt;- grep(\"^Dim\", names(dat), value = TRUE)\n\nrun_lasso &lt;- function(cols) {\n  Xm &lt;- as.matrix(dat[, cols]); set.seed(515)\n  f  &lt;- cv.glmnet(Xm[tr, ], y[tr], family = \"binomial\", alpha = 1)\n  p  &lt;- as.numeric(predict(f, Xm[te, ], s = \"lambda.min\", type = \"response\"))\n  round(as.numeric(auc(roc(y[te], p, quiet = TRUE))), 3)\n}\ntibble(representation = c(\"Acoustic features\", \"Embeddings\", \"Both\"),\n       test_AUC = c(run_lasso(feat_cols), run_lasso(emb_cols), run_lasso(c(feat_cols, emb_cols))))\n\n\n\n\n\nrepresentation\ntest_AUC\n\n\n\n\nAcoustic features\n0.995\n\n\nEmbeddings\n1.000\n\n\nBoth\n1.000"
+  },
+  {
+    "objectID": "lab/voice_lab.html#speech-to-text-needs-an-openai-api-key",
+    "href": "lab/voice_lab.html#speech-to-text-needs-an-openai-api-key",
+    "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
+    "section": "Speech-to-text (needs an OpenAI API key)",
+    "text": "Speech-to-text (needs an OpenAI API key)\n\nlibrary(openai)\nSys.setenv(OPENAI_API_KEY = \"YOUR-KEY\")   # never commit your key\ncreate_transcription(file = file.path(data_dir, \"1_alexa/alexa_cmd2.wav\"), model = \"whisper-1\")$text"
+  },
+  {
+    "objectID": "exercises.html",
+    "href": "exercises.html",
+    "title": "Mini exercises",
+    "section": "",
+    "text": "Four short exercises carry you from listening to a research design. Exercises 1–3 run in the lab notebook, where each has a prepared YOUR TURN chunk and a folded solution. Exercise 4 needs only a pen."
+  },
+  {
+    "objectID": "exercises.html#warm-up-audacity-10-demo",
+    "href": "exercises.html#warm-up-audacity-10-demo",
+    "title": "Mini exercises",
+    "section": "Warm-up · Audacity (10′, demo)",
+    "text": "Warm-up · Audacity (10′, demo)\n\n10 minutes · follow along or watch\n\nOpen & compare: drag data/1_alexa/alexa_cmd1.wav and alexa_cmd2.wav into one project. Compare length, pauses and peaks.\nSpectrogram view: track menu (the track name) → Spectrogram. Watch the harmonics rise in the frustrated command.\nPlot a spectrum: select one vowel → Analyze → Plot Spectrum. Find F0 and the formants.\nEdit, then re-check: Truncate Silence, and change pitch by ±2 semitones. What changes in what you hear, and in the picture?\nHear the microphone: load all files in data/2_micTests/. Same speaker, seven devices: which ones roll off the highs?"
+  },
+  {
+    "objectID": "exercises.html#exercise-1-listen-look",
+    "href": "exercises.html#exercise-1-listen-look",
+    "title": "Mini exercises",
+    "section": "Exercise 1 · Listen & look",
+    "text": "Exercise 1 · Listen & look\n\n8 minutes · pairs · notebook block 2\n\nPick an actor (02, 03 or 04). Plot calm vs. angry oscillograms and spectrograms side by side.\nNow bind() the two clips and plot them on one shared scale. What appears that was hidden?\nRun timer() with threshold 5 and 10. Which onset matches what you hear?\n\nDeliverable · One sentence naming the cue that gives anger away first, and the onset threshold you would use."
+  },
+  {
+    "objectID": "exercises.html#exercise-2-extract-compare",
+    "href": "exercises.html#exercise-2-extract-compare",
+    "title": "Mini exercises",
+    "section": "Exercise 2 · Extract & compare",
+    "text": "Exercise 2 · Extract & compare\n\n12 minutes · individual → pairs · notebook block 4\n\nRun voiceR::autoExtract() on the 32 trimmed clips.\nPlot pitch_mean, pitch_sd, loudness_mean and HNR_mean by emotion, then add one spectral and one temporal feature of your choice.\nCompare with the emotion-signature table from the slides, and check whether the effect holds for every actor.\n\nDeliverable · The feature family that separates calm from angry best, and one feature that surprised you.\n\n\n\n\nEmotion signatures from the slides: what theory predicts for each state."
+  },
+  {
+    "objectID": "exercises.html#exercise-3-predict-break-it",
+    "href": "exercises.html#exercise-3-predict-break-it",
+    "title": "Mini exercises",
+    "section": "Exercise 3 · Predict & break it",
+    "text": "Exercise 3 · Predict & break it\n\n10 minutes · pairs · notebook block 5\n\nFit a lasso on all 192 clips, holding out whole actors. Re-run with a different seed: how stable is the AUC?\nCompute AUC for female vs. male and for normal vs. strong intensity.\nName the first thing that would break if you used this model on customer-service calls.\n\nDeliverable · Your AUC, the weakest subgroup, and one validity threat for field use."
+  },
+  {
+    "objectID": "exercises.html#exercise-4-idea-sprint",
+    "href": "exercises.html#exercise-4-idea-sprint",
+    "title": "Mini exercises",
+    "section": "Exercise 4 · Idea sprint",
+    "text": "Exercise 4 · Idea sprint\n\n15 minutes · pairs → room\n\nPick one project of yours. Where could voice be the IV (manipulate a vocal cue), the DV (measure the voice) or the mediator?\nName the construct, the feature family that should move, and in which direction.\nName your data source (lab, online, field, voice agent) and the biggest validity threat.\n\nDeliverable · A one-sentence pitch: “We will measure ___ in voice to show ___.” Two or three pairs share."
+  },
+  {
+    "objectID": "setup.html",
+    "href": "setup.html",
+    "title": "Setup",
+    "section": "",
+    "text": "A laptop with headphones (a working microphone is a bonus, not required).\nNo coding experience is required to follow along: the rendered lab notebook shows every step and result, so you can focus on interpretation."
+  },
+  {
+    "objectID": "setup.html#what-to-bring",
+    "href": "setup.html#what-to-bring",
+    "title": "Setup",
+    "section": "",
+    "text": "A laptop with headphones (a working microphone is a bonus, not required).\nNo coding experience is required to follow along: the rendered lab notebook shows every step and result, so you can focus on interpretation."
+  },
+  {
+    "objectID": "setup.html#install-the-software",
+    "href": "setup.html#install-the-software",
+    "title": "Setup",
+    "section": "1 · Install the software",
+    "text": "1 · Install the software\n\nR (≥ 4.1): https://cran.r-project.org\nRStudio Desktop: https://posit.co/download/rstudio-desktop/\nAudacity (free audio editor, for the warm-up): https://www.audacityteam.org/download/"
+  },
+  {
+    "objectID": "setup.html#download-the-workshop-materials",
+    "href": "setup.html#download-the-workshop-materials",
+    "title": "Setup",
+    "section": "2 · Download the workshop materials",
+    "text": "2 · Download the workshop materials\nDownload everything (.zip, ~35 MB)\nUnzip it somewhere easy to find. Or, if you use git:\ngit clone https://github.com/childebrand/Melbourne-Voice-2026.git"
+  },
+  {
+    "objectID": "setup.html#install-the-r-packages",
+    "href": "setup.html#install-the-r-packages",
+    "title": "Setup",
+    "section": "3 · Install the R packages",
+    "text": "3 · Install the R packages\nOpen the downloaded folder in RStudio (double-click any file, or File → Open Project in New Session and choose the folder), set the working directory to the folder, and run:\nsource(\"setup/install_packages.R\")\nThis installs tuneR, seewave, soundgen, tidyverse, glmnet, pROC and voiceR, and plays a quick test.\n\n\n\n\n\n\nvoiceR is currently installed from the CRAN archive\n\n\n\nvoiceR was archived on CRAN in June 2026, so install.packages(\"voiceR\") fails. The setup script installs its dependencies and then the archived source package:\ninstall.packages(\"https://cran.r-project.org/src/contrib/Archive/voiceR/voiceR_0.1.0.tar.gz\",\n                 repos = NULL, type = \"source\")\nIf that still fails on your machine, don’t worry: the notebook automatically falls back to soundgen::analyze(), the same feature engine voiceR uses."
+  },
+  {
+    "objectID": "setup.html#test",
+    "href": "setup.html#test",
+    "title": "Setup",
+    "section": "4 · Test",
+    "text": "4 · Test\nOpen lab/voice_lab.qmd in RStudio and run the first two chunks (Setup and Warm-up). If you see two waveforms, you’re ready.\n\n\n\n\n\n\nNo sound on a Mac?\n\n\n\nRun tuneR::setWavPlayer(\"/usr/bin/afplay\") once, then listen() works."
+  },
+  {
+    "objectID": "setup.html#whats-in-the-folder",
+    "href": "setup.html#whats-in-the-folder",
+    "title": "Setup",
+    "section": "What’s in the folder",
+    "text": "What’s in the folder\n\n\n\n\n\n\n\nFolder\nContent\n\n\n\n\nslides/\nWorkshop slides (PowerPoint and PDF); the ▶ links in the slides play the audio in data/\n\n\nlab/voice_lab.qmd\nThe hands-on notebook (Quarto; opens and runs like an R Markdown file in RStudio)\n\n\ndata/1_alexa/\nThe frustrated Alexa user: two commands and three wake words\n\n\ndata/2_micTests/\nOne speaker recorded on seven devices, plus two breathing samples\n\n\ndata/3_ravdess/\n32 RAVDESS clips (actors 01–04, calm vs. angry)\n\n\ndata/ravdess_features.csv\nAcoustic features for all 192 calm/angry clips (24 actors)\n\n\ndata/ravdess_embeddings.csv\n768-dimensional voice embeddings for the same clips\n\n\nscripts/get_full_ravdess.R\nDownloads the full 192 clips from Zenodo, if you want to extract everything yourself"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Listening to Behavior",
+    "section": "",
+    "text": "Guest workshop · University of Melbourne\n  \n  Voice analytics for behavioural scientists: from acoustic features to voice agents, in one afternoon.\n  Set up before you come\n     Open the lab notebook"
+  },
+  {
+    "objectID": "index.html#about-the-workshop",
+    "href": "index.html#about-the-workshop",
+    "title": "Listening to Behavior",
+    "section": "About the workshop",
+    "text": "About the workshop\nThe human voice carries what surveys and clicks miss: emotion in real time, arousal and stress, confidence, and spontaneous reactions before conscious reflection. Smart speakers, voice assistants and LLM-based voice agents now make voice data cheap to collect at scale, yet most behavioural researchers lack the tools to use it.\nThis condensed workshop introduces voice as a behavioural data layer. We cover how speech is produced, which acoustic features map onto which psychological states, and where construct validity breaks down. In the hands-on lab you work with real emotional speech (calm vs. angry speakers): you listen in Audacity, plot waveforms and spectrograms in R, extract acoustic features with voiceR, and test whether those features separate the two states. We close with voice-based conversational agents for data collection, the ethics of voice data, and a short sprint on your own research ideas. No prior voice analytics experience is needed.\n\n\n\nSame words, different meaning: two commands from a frustrated Alexa user."
+  },
+  {
+    "objectID": "index.html#agenda",
+    "href": "index.html#agenda",
+    "title": "Listening to Behavior",
+    "section": "Agenda",
+    "text": "Agenda\n\n\n\n13:00\nLectureWelcome & why voice: voice as a behavioural data layer; live demo with two Alexa commands\n\n\n13:15\nLectureTheory & measurement: speech chain and source–filter model; feature families; emotion signatures; construct validity and recording devices\n\n\n13:55\nBreakOpen the lab notebook and test your audio\n\n\n14:05\nDemoAudacity warm-up: waveforms, spectrogram view, spectra, silence and pitch edits, seven microphones\n\n\n14:15\nLabHands-on case: calm vs. angry (RAVDESS) in R: listen and look, trim, extract with voiceR, compare, predict (Exercises 1–3)\n\n\n14:55\nLectureFrom analytics to voice agents: speech-to-text, the STT → LLM → TTS loop, consent, privacy and bias\n\n\n15:15\nSprintIdea sprint & wrap-up (Exercise 4): voice as IV, DV or mediator in your own research"
+  },
+  {
+    "objectID": "index.html#learning-outcomes",
+    "href": "index.html#learning-outcomes",
+    "title": "Listening to Behavior",
+    "section": "Learning outcomes",
+    "text": "Learning outcomes\n\n 01Argue for voiceExplain why voice is a distinct behavioural data source and where it adds value over text and self-report.\n 02Map features to constructsLink pitch, loudness, spectral, voice-quality and timing features to psychological states, and name the main validity threats.\n 03Run a minimal pipelineLoad audio, plot waveforms and spectrograms, trim, extract features and compare conditions in R.\n 04Design with voiceSketch how voice enters your own studies as IV, DV or mediator, including via voice agents."
+  },
+  {
+    "objectID": "index.html#facilitator",
+    "href": "index.html#facilitator",
+    "title": "Listening to Behavior",
+    "section": "Facilitator",
+    "text": "Facilitator\nChristian Hildebrand is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods. Contact: christian.hildebrand@unisg.ch\nThis is the one-afternoon version of the 5-day GSERM course “Voice Analytics for Behavioral Scientists”."
+  },
+  {
+    "objectID": "materials.html",
+    "href": "materials.html",
+    "title": "Materials",
+    "section": "",
+    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3; debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
+  },
+  {
+    "objectID": "materials.html#slides",
+    "href": "materials.html#slides",
+    "title": "Materials",
+    "section": "",
+    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3; debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
+  },
+  {
+    "objectID": "materials.html#lab-notebook",
+    "href": "materials.html#lab-notebook",
+    "title": "Materials",
+    "section": "Lab notebook",
+    "text": "Lab notebook\nRendered notebook (with solutions) Source (.qmd)\n\n\n\nThe lab in one picture: calm vs. angry, same actor, same sentence, on one shared scale."
+  },
+  {
+    "objectID": "materials.html#audio-and-data",
+    "href": "materials.html#audio-and-data",
+    "title": "Materials",
+    "section": "Audio and data",
+    "text": "Audio and data\nDownload all materials (.zip)\n\n\n\n\n\n\n\n\nDataset\nFiles\nUsed for\n\n\n\n\nAlexa interaction\nalexa_cmd1.wav, alexa_cmd2.wav, alexa_wakeword_1–3.wav\nLive demo, Audacity warm-up, notebook block 1\n\n\nMicrophone tests\n7 devices (Bose, Elgato, Rode NT1, Sennheiser, Rode Wireless GO, Rode SmartLav, MacBook) + 2 breathing samples\nAudacity warm-up, notebook bonus\n\n\nRAVDESS calm vs. angry\n32 clips (actors 01–04) + features and embeddings for all 192 clips\nExercises 1–3\n\n\n\nRAVDESS: Livingstone & Russo (2018), PLoS ONE; data at zenodo.org/records/1188976, licensed CC BY-NC-SA 4.0. The subset here is redistributed for non-commercial teaching under the same licence."
+  },
+  {
+    "objectID": "resources.html",
+    "href": "resources.html",
+    "title": "Readings & resources",
+    "section": "",
+    "text": "Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. Journal of Business Research, 121, 364–374.\nBusquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. Behavior Research Methods.\nHildebrand, C., Cascio Rizzo, G. L., & Berger, J. (forthcoming). The machine between us: How AI shapes the way we speak. Current Opinion in Psychology."
+  },
+  {
+    "objectID": "resources.html#recommended-readings",
+    "href": "resources.html#recommended-readings",
+    "title": "Readings & resources",
+    "section": "",
+    "text": "Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. Journal of Business Research, 121, 364–374.\nBusquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. Behavior Research Methods.\nHildebrand, C., Cascio Rizzo, G. L., & Berger, J. (forthcoming). The machine between us: How AI shapes the way we speak. Current Opinion in Psychology."
+  },
+  {
+    "objectID": "resources.html#further-reading-from-the-slides",
+    "href": "resources.html#further-reading-from-the-slides",
+    "title": "Readings & resources",
+    "section": "Further reading from the slides",
+    "text": "Further reading from the slides\n\nEfthymiou, F., Hildebrand, C., et al. (2023). The power of AI-generated voices: How digital vocal tract length shapes product congruency and ad performance.\nScherer, K. R., Johnstone, T., & Klasmeyer, G. (2003). Vocal expression of emotion. In Handbook of Affective Sciences. Oxford University Press.\nFant, G. (1960). Acoustic Theory of Speech Production. Mouton.\nBerger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes: Using text for marketing insight. Journal of Marketing, 84(1), 1–25.\nJurafsky, D., & Martin, J. H. Speech and Language Processing (3rd ed. draft). https://web.stanford.edu/~jurafsky/slp3/\nLivingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). PLoS ONE, 13(5), e0196391."
+  },
+  {
+    "objectID": "resources.html#tools",
+    "href": "resources.html#tools",
+    "title": "Readings & resources",
+    "section": "Tools",
+    "text": "Tools\n\n\n\nTool\nWhat for\n\n\n\n\nAudacity\nListening, spectrogram view, quick edits\n\n\nseewave / tuneR\nReading, plotting and editing audio in R\n\n\nsoundgen\nAcoustic feature extraction (analyze())\n\n\nvoiceR (Busquet & Hildebrand)\nBatch extraction and automated reports (autoExtract(), autoReport()); currently from the CRAN archive\n\n\nopenai\nWhisper speech-to-text from R"
+  },
+  {
+    "objectID": "resources.html#going-further",
+    "href": "resources.html#going-further",
+    "title": "Readings & resources",
+    "section": "Going further",
+    "text": "Going further\nThis afternoon is the compressed version of the 5-day GSERM course Voice Analytics for Behavioral Scientists, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: christian.hildebrand@unisg.ch."
+  }
+]
