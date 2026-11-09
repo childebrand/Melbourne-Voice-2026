@@ -1,0 +1,69 @@
+---
+title: "Setup"
+subtitle: "Ten minutes before the workshop saves twenty minutes during it"
+---
+
+## What to bring
+
+- A laptop with **headphones** (a working microphone is a bonus, not required).
+- No coding experience is required to follow along: the [rendered lab notebook](lab/voice_lab.html) shows every step and result, so you can focus on interpretation.
+
+## 1 · Install the software
+
+1. **R** (≥ 4.1): <https://cran.r-project.org>
+2. **RStudio Desktop**: <https://posit.co/download/rstudio-desktop/>
+3. **Audacity** (free audio editor, for the warm-up): <https://www.audacityteam.org/download/>
+
+## 2 · Download the workshop materials
+
+<a class="btn-hsg" href="https://github.com/childebrand/Melbourne-Voice-2026/archive/refs/heads/main.zip">Download everything (.zip, ~35 MB)</a>
+
+Unzip it somewhere easy to find. Or, if you use git:
+
+```bash
+git clone https://github.com/childebrand/Melbourne-Voice-2026.git
+```
+
+## 3 · Install the R packages
+
+Open the downloaded folder in RStudio (double-click any file, or *File → Open Project in New Session* and choose the folder), set the working directory to the folder, and run:
+
+```r
+source("setup/install_packages.R")
+```
+
+This installs `tuneR`, `seewave`, `soundgen`, `tidyverse`, `glmnet`, `pROC` and **voiceR**, and plays a quick test.
+
+::: {.callout-warning}
+## voiceR is currently installed from the CRAN archive
+`voiceR` was archived on CRAN in June 2026, so `install.packages("voiceR")` fails. The setup script installs its dependencies and then the archived source package:
+
+```r
+install.packages("https://cran.r-project.org/src/contrib/Archive/voiceR/voiceR_0.1.0.tar.gz",
+                 repos = NULL, type = "source")
+```
+
+If that still fails on your machine, don't worry: the notebook automatically falls back to `soundgen::analyze()`, the same feature engine `voiceR` uses.
+:::
+
+## 4 · Test
+
+Open `lab/voice_lab.qmd` in RStudio and run the first two chunks (*Setup* and *Warm-up*). If you see two waveforms, you're ready.
+
+::: {.callout-tip}
+## No sound on a Mac?
+Run `tuneR::setWavPlayer("/usr/bin/afplay")` once, then `listen()` works.
+:::
+
+## What's in the folder
+
+| Folder | Content |
+|---|---|
+| `slides/` | Workshop slides (PowerPoint and PDF); the ▶ links in the slides play the audio in `data/` |
+| `lab/voice_lab.qmd` | The hands-on notebook (Quarto; opens and runs like an R Markdown file in RStudio) |
+| `data/1_alexa/` | The frustrated Alexa user: two commands and three wake words |
+| `data/2_micTests/` | One speaker recorded on seven devices, plus two breathing samples |
+| `data/3_ravdess/` | 32 RAVDESS clips (actors 01–04, calm vs. angry) |
+| `data/ravdess_features.csv` | Acoustic features for all 192 calm/angry clips (24 actors) |
+| `data/ravdess_embeddings.csv` | 768-dimensional voice embeddings for the same clips |
+| `scripts/get_full_ravdess.R` | Downloads the full 192 clips from Zenodo, if you want to extract everything yourself |

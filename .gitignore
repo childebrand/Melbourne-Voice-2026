@@ -1,0 +1,9 @@
+.Rproj.user/
+.Rhistory
+.RData
+.DS_Store
+data/3_ravdess/processed/
+data/3_ravdess_full/
+/.quarto/
+lab/voice_lab.html
+lab/*_files/

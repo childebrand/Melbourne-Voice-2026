@@ -1,0 +1,36 @@
+---
+title: "Materials"
+---
+
+## Slides
+
+<a class="btn-hsg" href="slides/Melbourne_VoiceAnalytics_Slides.pdf">Slides (PDF)</a>
+<a class="btn-hsg alt" href="slides/Melbourne_VoiceAnalytics_Slides.pptx">Slides (PowerPoint)</a>
+
+The PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.
+
+| Part | Content |
+|---|---|
+| 1 · Why voice? | States, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator |
+| 2 · Theory & measurement | Speech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices |
+| 3 · Hands-on lab | Audacity warm-up; lab roadmap; Exercises 1–3; debrief |
+| 4 · Voice agents | Speech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint |
+
+## Lab notebook
+
+<a class="btn-hsg" href="lab/voice_lab.html">Rendered notebook (with solutions)</a>
+<a class="btn-hsg alt" href="https://github.com/childebrand/Melbourne-Voice-2026/blob/main/lab/voice_lab.qmd">Source (.qmd)</a>
+
+![The lab in one picture: calm vs. angry, same actor, same sentence, on one shared scale.](assets/calm_angry_shared.png)
+
+## Audio and data
+
+<a class="btn-hsg" href="https://github.com/childebrand/Melbourne-Voice-2026/archive/refs/heads/main.zip">Download all materials (.zip)</a>
+
+| Dataset | Files | Used for |
+|---|---|---|
+| **Alexa interaction** | `alexa_cmd1.wav`, `alexa_cmd2.wav`, `alexa_wakeword_1–3.wav` | Live demo, Audacity warm-up, notebook block 1 |
+| **Microphone tests** | 7 devices (Bose, Elgato, Rode NT1, Sennheiser, Rode Wireless GO, Rode SmartLav, MacBook) + 2 breathing samples | Audacity warm-up, notebook bonus |
+| **RAVDESS calm vs. angry** | 32 clips (actors 01–04) + features and embeddings for all 192 clips | Exercises 1–3 |
+
+RAVDESS: Livingstone & Russo (2018), *PLoS ONE*; data at [zenodo.org/records/1188976](https://doi.org/10.5281/zenodo.1188976), licensed CC BY-NC-SA 4.0. The subset here is redistributed for non-commercial teaching under the same licence.

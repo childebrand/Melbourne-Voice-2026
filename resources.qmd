@@ -1,0 +1,32 @@
+---
+title: "Readings & resources"
+---
+
+## Recommended readings
+
+- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. *Journal of Business Research*, 121, 364–374.
+- Busquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. *Behavior Research Methods*.
+- Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (forthcoming). The machine between us: How AI shapes the way we speak. *Current Opinion in Psychology*.
+
+## Further reading from the slides
+
+- Efthymiou, F., Hildebrand, C., et al. (2023). The power of AI-generated voices: How digital vocal tract length shapes product congruency and ad performance.
+- Scherer, K. R., Johnstone, T., & Klasmeyer, G. (2003). Vocal expression of emotion. In *Handbook of Affective Sciences*. Oxford University Press.
+- Fant, G. (1960). *Acoustic Theory of Speech Production*. Mouton.
+- Berger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes: Using text for marketing insight. *Journal of Marketing*, 84(1), 1–25.
+- Jurafsky, D., & Martin, J. H. *Speech and Language Processing* (3rd ed. draft). <https://web.stanford.edu/~jurafsky/slp3/>
+- Livingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). *PLoS ONE*, 13(5), e0196391.
+
+## Tools
+
+| Tool | What for |
+|---|---|
+| [Audacity](https://www.audacityteam.org) | Listening, spectrogram view, quick edits |
+| [seewave](https://cran.r-project.org/package=seewave) / [tuneR](https://cran.r-project.org/package=tuneR) | Reading, plotting and editing audio in R |
+| [soundgen](https://cran.r-project.org/package=soundgen) | Acoustic feature extraction (`analyze()`) |
+| voiceR (Busquet & Hildebrand) | Batch extraction and automated reports (`autoExtract()`, `autoReport()`); currently from the [CRAN archive](https://cran.r-project.org/src/contrib/Archive/voiceR/) |
+| [openai](https://cran.r-project.org/package=openai) | Whisper speech-to-text from R |
+
+## Going further
+
+This afternoon is the compressed version of the 5-day GSERM course *Voice Analytics for Behavioral Scientists*, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch).

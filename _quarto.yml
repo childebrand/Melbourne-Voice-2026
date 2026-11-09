@@ -1,0 +1,51 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - setup.qmd
+    - materials.qmd
+    - exercises.qmd
+    - resources.qmd
+    - lab/voice_lab.qmd
+  resources:
+    - slides/*.pdf
+    - slides/*.pptx
+    - assets/*
+
+execute:
+  freeze: auto
+
+website:
+  title: "Listening to Behavior"
+  site-url: "https://childebrand.github.io/Melbourne-Voice-2026/"
+  repo-url: "https://github.com/childebrand/Melbourne-Voice-2026"
+  repo-actions: [source]
+  page-navigation: true
+  navbar:
+    logo: assets/hsg_logo.png
+    left:
+      - href: index.qmd
+        text: Overview
+      - href: setup.qmd
+        text: Setup
+      - href: materials.qmd
+        text: Materials
+      - href: lab/voice_lab.qmd
+        text: Lab notebook
+      - href: exercises.qmd
+        text: Exercises
+      - href: resources.qmd
+        text: Readings
+    right:
+      - icon: github
+        href: "https://github.com/childebrand/Melbourne-Voice-2026"
+  page-footer:
+    left: "Voice Analytics Mini-Workshop · University of Melbourne · 11 Nov 2026"
+    right: "Prof. Dr. Christian Hildebrand · University of St.Gallen (HSG)"
+
+format:
+  html:
+    theme: [flatly, assets/theme.scss]
+    toc: true
+    smooth-scroll: true
