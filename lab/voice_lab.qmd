@@ -1,0 +1,406 @@
+---
+title: "Hands-on Lab: Does Anger Sound Different from Calm?"
+subtitle: "Listening to Behavior · Voice Analytics Mini-Workshop · University of Melbourne, 11 Nov 2026"
+author: "Prof. Dr. Christian Hildebrand"
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    code-copy: true
+    code-background: true
+    df-print: kable
+execute:
+  warning: false
+  message: false
+---
+
+::: {.callout-note}
+## How to use this notebook (50 minutes)
+This is the compressed, one-afternoon version of the 5-day GSERM voice analytics course. All code is prepared. You **run it, read the output, and fill in the chunks marked `YOUR TURN`**. Each exercise has a folded solution: try first, then peek.
+
+| Block | Time | What you do |
+|---|---|---|
+| 0 · Setup | 3′ | Load packages, check the audio plays |
+| 1 · Warm-up | 5′ | The Alexa example in R (same files as in Audacity) |
+| 2 · Listen & look | 8′ | **Exercise 1**: calm vs. angry, side by side and on one scale |
+| 3 · Trim | 5′ | Detect speech onsets and cut silence |
+| 4 · Extract & compare | 12′ | **Exercise 2**: `voiceR::autoExtract()` on 32 clips |
+| 5 · Predict & break it | 10′ | **Exercise 3**: a speaker-independent model on all 192 clips |
+| 6 · Bonus | – | Microphones, embeddings, speech-to-text |
+
+Not coding today? Read the rendered version of this page on the course website and focus on the interpretation questions.
+:::
+
+# 0 · Setup
+
+Install once (see `setup/install_packages.R` in the repository; it also handles `voiceR`, which is currently installed from the CRAN archive).
+
+```{r setup}
+library(tuneR)     # read/write Wave objects
+library(seewave)   # oscillograms, spectrograms, editing
+library(soundgen)  # acoustic feature extraction
+library(tidyverse) # wrangling and plots
+library(glmnet)    # lasso models
+library(pROC)      # AUC
+
+has_voiceR <- requireNamespace("voiceR", quietly = TRUE)
+if (has_voiceR) library(voiceR)
+
+data_dir <- "../data"   # relative to this notebook in lab/
+theme_set(theme_minimal(base_size = 12))
+pal <- c(Calm = "#115C2E", Angry = "#6A1F6E")
+has_voiceR
+```
+
+::: {.callout-tip}
+## Mac users: no sound from `listen()`?
+Run `tuneR::setWavPlayer("/usr/bin/afplay")` once. On Windows, `listen()` usually works out of the box.
+:::
+
+# 1 · Warm-up: the frustrated Alexa user
+
+These are the same two commands we just opened in Audacity. Same words, different speaker state.
+
+```{r alexa-read}
+cmd1 <- readWave(file.path(data_dir, "1_alexa/alexa_cmd1.wav"))
+cmd2 <- readWave(file.path(data_dir, "1_alexa/alexa_cmd2.wav"))
+cmd1
+cmd2
+# listen(cmd1); listen(cmd2)
+```
+
+```{r alexa-plots, fig.height=6}
+par(mfrow = c(2, 1))
+oscillo(cmd1, colwave = "#115C2E", title = "Command 1")
+oscillo(cmd2, colwave = "#6A1F6E", title = "Command 2")
+```
+
+```{r alexa-spectro, fig.height=5}
+spectro(cmd2, flim = c(0, 6), osc = TRUE, dB = "max0")
+```
+
+**Look for:** the second command is longer, has more breaks between words, and its harmonics sit higher. Those are the cues we will now quantify on a proper dataset.
+
+# 2 · Listen & look (Exercise 1)
+
+## The data
+
+We use the **RAVDESS** corpus (Livingstone & Russo, 2018). Actors say the same sentence, *“Kids are talking by the door”*, either **calm** or **angry**, at normal or strong intensity, twice. The repository includes the 32 clips of **actors 01–04**; the precomputed features for all 192 clips (24 actors) are in `data/ravdess_features.csv`.
+
+RAVDESS encodes the design in the filename, e.g. `03-01-05-01-01-01-12.wav`:
+
+| Position | Field | Codes |
+|---|---|---|
+| 3 | **Emotion** | 02 = calm, 05 = angry |
+| 4 | Intensity | 01 = normal, 02 = strong |
+| 6 | Repetition | 01, 02 |
+| 7 | **Actor** | 01–24 (odd = male, even = female) |
+
+```{r parse}
+emo_dir   <- file.path(data_dir, "3_ravdess")
+emo_files <- list.files(emo_dir, pattern = "\\.wav$")
+
+parts <- str_split(str_remove(emo_files, "\\.wav$"), "-", simplify = TRUE)
+meta <- tibble(
+  file      = emo_files,
+  emotion   = if_else(parts[, 3] == "02", "Calm", "Angry"),
+  intensity = if_else(parts[, 4] == "01", "Normal", "Strong"),
+  actor     = as.integer(parts[, 7]),
+  sex       = if_else(actor %% 2 == 0, "Female", "Male")
+)
+count(meta, actor, sex, emotion)
+```
+
+## A first look: actor 01
+
+```{r ex-pair}
+ex_calm  <- readWave(file.path(emo_dir, "03-01-02-01-01-01-01.wav"))
+ex_angry <- readWave(file.path(emo_dir, "03-01-05-01-01-01-01.wav"))
+# listen(ex_calm); listen(ex_angry)
+
+par(mfrow = c(1, 2))
+oscillo(ex_calm,  colwave = "#115C2E", title = "Calm")
+oscillo(ex_angry, colwave = "#6A1F6E", title = "Angry")
+```
+
+Careful: `oscillo()` and `spectro(dB = "max0")` scale **each clip to its own maximum**, so side-by-side plots hide the loudness difference. `bind()` puts both clips on **one shared scale**:
+
+```{r ex-bind, fig.height=5}
+spectro(bind(ex_calm, ex_angry), flim = c(0, 4), osc = TRUE, dB = "max0")
+```
+
+::: {.callout-important}
+## Exercise 1 · Listen & look (8 minutes, pairs)
+1. Pick **another actor** (02, 03 or 04). Plot their calm vs. angry clip side by side, then on one shared scale with `bind()`.
+2. Which cue gives anger away first: amplitude, duration, or where the energy sits in frequency?
+3. Run `timer()` with `threshold = 5` and `threshold = 10` on the calm clip. Which onset matches what you **hear**?
+
+**Deliverable:** one sentence naming the cue, plus the threshold you would use.
+:::
+
+```{r ex1-your-turn}
+# YOUR TURN ---------------------------------------------------------------
+# my_actor <- "02"
+# calm  <- readWave(file.path(emo_dir, paste0("03-01-02-01-01-01-", my_actor, ".wav")))
+# angry <- ...
+
+```
+
+::: {.callout-tip collapse="true"}
+## Solution: Exercise 1
+```{r ex1-solution, fig.height=7}
+my_actor <- "02"
+calm  <- readWave(file.path(emo_dir, paste0("03-01-02-01-01-01-", my_actor, ".wav")))
+angry <- readWave(file.path(emo_dir, paste0("03-01-05-01-01-01-", my_actor, ".wav")))
+
+spectro(bind(calm, angry), flim = c(0, 4), osc = TRUE, dB = "max0")
+
+on5  <- timer(calm, threshold = 5,  plot = FALSE)$s.start[1]
+on10 <- timer(calm, threshold = 10, plot = FALSE)$s.start[1]
+c(threshold_5 = on5, threshold_10 = on10)
+```
+The angry clip has much larger amplitude excursions and more energy above 1 kHz. A low threshold can lock onto low-level noise before speech starts; always check the onset against what you hear.
+:::
+
+# 3 · Trim silence
+
+Every RAVDESS clip starts and ends with silence (roughly half of each file). Silence is not voice, so we cut each clip from the first to the last speech segment found by `timer()`, keeping a 0.2 s buffer so the last word is not clipped. Never trust a preprocessing step you have not looked at:
+
+```{r trim-check, fig.height=4}
+t10 <- timer(ex_calm, threshold = 10, plot = FALSE)
+oscillo(ex_calm, colwave = "black", title = "Calm, actor 01: detected onset (red) and offset (blue)")
+abline(v = t10$s.start[1], col = "red", lwd = 2, lty = 2)
+abline(v = tail(t10$s.end, 1), col = "blue", lwd = 2, lty = 2)
+```
+
+Now trim all 32 clips into `data/3_ravdess/processed/` (the raw files stay untouched):
+
+```{r trim-all}
+trim_wave <- function(w, threshold = 10, pad = 0.2) {
+  t <- timer(w, threshold = threshold, plot = FALSE)
+  if (length(t$s.start) == 0) return(w)
+  onset  <- t$s.start[1]
+  offset <- min(tail(t$s.end, 1) + pad, seewave::duration(w))
+  if (!is.finite(onset) || offset <= onset) return(w)
+  extractWave(w, from = onset, to = offset, xunit = "time")
+}
+
+proc_dir <- file.path(emo_dir, "processed")
+dir.create(proc_dir, showWarnings = FALSE)
+for (f in emo_files) {
+  savewav(trim_wave(readWave(file.path(emo_dir, f))), filename = file.path(proc_dir, f))
+}
+
+tibble(file = emo_files,
+       raw_s     = map_dbl(emo_files, ~ seewave::duration(readWave(file.path(emo_dir, .x)))),
+       trimmed_s = map_dbl(emo_files, ~ seewave::duration(readWave(file.path(proc_dir, .x))))) %>%
+  summarise(mean_raw = mean(raw_s), mean_trimmed = mean(trimmed_s))
+```
+
+# 4 · Extract & compare (Exercise 2)
+
+`voiceR::autoExtract()` runs the full `soundgen` feature set over a list of recordings and reads the design from the filename. RAVDESS uses `-` as separator; we tell `voiceR` which positions hold the condition (emotion) and the speaker ID, and mark the rest `Null`. With 32 short clips this takes about 1–2 minutes. If `voiceR` is missing or incompatible with your `soundgen` version, the chunk falls back to `soundgen::analyze()`, the engine `voiceR` uses, and you get the same feature names.
+
+```{r extract}
+proc_files <- list.files(proc_dir, pattern = "\\.wav$")
+wav_proc <- set_names(map(proc_files, ~ readWave(file.path(proc_dir, .x))),
+                      str_remove(proc_files, "\\.wav$"))
+
+# Plan B: the soundgen engine that voiceR wraps, one file at a time
+extract_soundgen <- function(files, dir) {
+  map_dfr(files, ~ analyze(file.path(dir, .x), plot = FALSE,
+                           summaryFun = c("mean", "sd"))$summary %>% mutate(file = .x))
+}
+
+feats <- NULL
+if (has_voiceR) {
+  feats <- tryCatch(suppressWarnings(
+    autoExtract(audioList = wav_proc, fileType = "wav",
+                fileNamePattern = "Null-Null-Condition-Null-Null-Null-ID",
+                sep = "-", extended = TRUE,
+                parallel = parallel::detectCores() > 3)),   # voiceR uses detectCores() - 2 workers
+    error = function(e) NULL)
+  if (!is.null(feats) && nrow(feats) == length(proc_files)) {
+    feats <- feats %>% mutate(file = proc_files)    # same order as wav_proc
+  } else {
+    message("voiceR returned no rows (soundgen >= 3.0 breaks voiceR 0.1.0): using soundgen::analyze() instead.")
+    feats <- NULL
+  }
+}
+if (is.null(feats)) feats <- extract_soundgen(proc_files, proc_dir)
+
+feats <- feats %>% select(-any_of(c("ID", "Condition"))) %>% left_join(meta, by = "file")
+dim(feats)
+```
+
+Four features from four families, by emotion:
+
+```{r compare, fig.height=4}
+feats %>%
+  select(emotion, pitch_mean, pitch_sd, loudness_mean, HNR_mean) %>%
+  pivot_longer(-emotion) %>%
+  ggplot(aes(emotion, value, fill = emotion)) +
+  geom_boxplot(alpha = 0.85, show.legend = FALSE) +
+  facet_wrap(~ name, scales = "free_y", nrow = 1) +
+  scale_fill_manual(values = pal) +
+  labs(x = NULL, y = NULL, title = "Calm vs. angry, actors 01-04 (32 trimmed clips)")
+```
+
+::: {.callout-important}
+## Exercise 2 · Extract & compare (12 minutes, individual → pairs)
+1. Recall the emotion-signature table from the slides: anger should show **high F0** and **high intensity**. Does it here?
+2. Pick **two more features** from `names(feats)`, one spectral (e.g. `specCentroid_mean`, `entropy_mean`) and one temporal (e.g. `voiced`, `duration`). Plot them by emotion.
+3. Compute the mean difference (angry − calm) **within each actor**. Is the effect consistent across all four speakers?
+
+**Deliverable:** the feature family that separates calm from angry best, and one feature that surprised you.
+:::
+
+```{r ex2-your-turn}
+# YOUR TURN ---------------------------------------------------------------
+# names(feats)
+# feats %>% group_by(actor, emotion) %>% summarise(...)
+
+```
+
+::: {.callout-tip collapse="true"}
+## Solution: Exercise 2
+```{r ex2-solution}
+feats %>%
+  group_by(actor, sex, emotion) %>%
+  summarise(across(c(pitch_mean, loudness_mean, HNR_mean, specCentroid_mean), \(x) mean(x, na.rm = TRUE)), .groups = "drop") %>%
+  pivot_longer(c(pitch_mean, loudness_mean, HNR_mean, specCentroid_mean)) %>%
+  pivot_wider(names_from = emotion, values_from = value) %>%
+  mutate(angry_minus_calm = round(Angry - Calm, 2)) %>%
+  select(actor, sex, name, angry_minus_calm) %>%
+  pivot_wider(names_from = name, values_from = angry_minus_calm)
+```
+Pitch and spectral centroid rise and HNR falls (a harsher voice) for all four actors. Loudness is the surprise: it goes up for two actors and down for two. Recording level and normalisation decide what amplitude means, so check that the level was held constant before you interpret it.
+:::
+
+# 5 · Predict & break it (Exercise 3)
+
+Now the full corpus: 192 clips, 24 actors, ~108 features (extracted with exactly the code above on the trimmed files).
+
+```{r load-full}
+rav <- read_csv(file.path(data_dir, "ravdess_features.csv")) %>%
+  mutate(intensity = if_else(str_split_i(file, "-", 4) == "01", "Normal", "Strong"))
+feat_cols <- setdiff(names(rav), c("file", "actor", "sex", "emotion", "intensity"))
+c(clips = nrow(rav), actors = n_distinct(rav$actor), features = length(feat_cols))
+```
+
+**Speaker-independent split.** If an actor appears in both training and test data, the model can learn the *speaker* rather than the *emotion*. We hold out six whole actors (three female, three male).
+
+```{r split-model}
+y <- as.integer(rav$emotion == "Angry")
+X <- as.matrix(rav[, feat_cols])
+
+set.seed(6207)
+test_actors <- sort(c(sample(seq(2, 24, 2), 3), sample(seq(1, 23, 2), 3)))
+tr <- which(!rav$actor %in% test_actors)
+te <- which(rav$actor %in% test_actors)
+
+set.seed(515)
+fit  <- cv.glmnet(X[tr, ], y[tr], family = "binomial", alpha = 1)
+prob <- as.numeric(predict(fit, X[te, ], s = "lambda.min", type = "response"))
+
+tibble(held_out_actors = paste(test_actors, collapse = ", "),
+       test_AUC = round(as.numeric(auc(roc(y[te], prob, quiet = TRUE))), 3),
+       test_accuracy = round(mean((prob > 0.5) == y[te]), 3))
+```
+
+Which features did the lasso keep? (Coefficients are on each feature's original scale, so read selection and sign, not size.)
+
+```{r what-predicts}
+co <- coef(fit, s = "lambda.min")
+tibble(feature = rownames(co)[-1], coef = as.numeric(co[-1])) %>%
+  filter(coef != 0) %>% arrange(desc(abs(coef))) %>% head(10)
+```
+
+::: {.callout-important}
+## Exercise 3 · Predict & break it (10 minutes, pairs)
+1. Re-run the model with a **different seed** for the held-out actors. How stable is the AUC?
+2. **Break it down:** compute AUC separately for female vs. male and for normal vs. strong intensity in the test set.
+3. Discuss: name the first thing that would break if you ran this model on customer-service calls.
+
+**Deliverable:** your AUC, the weakest subgroup, and one validity threat for field use.
+:::
+
+```{r ex3-your-turn}
+# YOUR TURN ---------------------------------------------------------------
+# test <- rav[te, ] %>% mutate(prob = prob)
+# test %>% group_by(sex) %>% summarise(AUC = ...)
+
+```
+
+::: {.callout-tip collapse="true"}
+## Solution: Exercise 3
+```{r ex3-solution}
+test <- rav[te, ] %>% mutate(prob = prob, y = as.integer(emotion == "Angry"))
+sub_auc <- function(d) as.numeric(auc(roc(d$y, d$prob, quiet = TRUE)))
+
+bind_rows(
+  test %>% group_by(group = sex)       %>% group_modify(~ tibble(AUC = sub_auc(.x), n = nrow(.x))),
+  test %>% group_by(group = intensity) %>% group_modify(~ tibble(AUC = sub_auc(.x), n = nrow(.x)))
+) %>% mutate(AUC = round(AUC, 3))
+```
+Near-perfect AUC is expected: this is **acted**, studio-recorded speech with one fixed sentence. Subtle (normal-intensity) anger is the harder case. In the field, expect different microphones and rooms, spontaneous speech, varying words and accents: validate on that data before making any claim.
+:::
+
+# 6 · Bonus (if you finish early)
+
+## Hear the microphone
+
+Same speaker, same text, seven devices (from Busquet, Efthymiou & Hildebrand 2023). Compare the average spectra: which devices roll off the high frequencies?
+
+```{r mic-spectra, fig.height=6}
+mic_dir   <- file.path(data_dir, "2_micTests")
+mic_files <- list.files(mic_dir, pattern = "^[0-9]_audio.*\\.wav$")
+
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+for (f in mic_files) {
+  w <- readWave(file.path(mic_dir, f))
+  if (w@stereo) w <- mono(w, "left")
+  meanspec(w, flim = c(0, 10), main = str_remove(f, "\\.wav$"), col = "#115C2E")
+}
+```
+
+## Acoustic features vs. voice embeddings
+
+`data/ravdess_embeddings.csv` holds a 768-dimensional embedding per clip from a pre-trained speech model (via `talk::talkEmbed()` in the full course). Does the black box beat the named features?
+
+```{r embeddings}
+emb <- read_csv(file.path(data_dir, "ravdess_embeddings.csv"))
+dat <- rav %>% left_join(emb, by = "file")
+emb_cols <- grep("^Dim", names(dat), value = TRUE)
+
+run_lasso <- function(cols) {
+  Xm <- as.matrix(dat[, cols]); set.seed(515)
+  f  <- cv.glmnet(Xm[tr, ], y[tr], family = "binomial", alpha = 1)
+  p  <- as.numeric(predict(f, Xm[te, ], s = "lambda.min", type = "response"))
+  round(as.numeric(auc(roc(y[te], p, quiet = TRUE))), 3)
+}
+tibble(representation = c("Acoustic features", "Embeddings", "Both"),
+       test_AUC = c(run_lasso(feat_cols), run_lasso(emb_cols), run_lasso(c(feat_cols, emb_cols))))
+```
+
+## Speech-to-text (needs an OpenAI API key)
+
+```{r whisper, eval=FALSE}
+library(openai)
+Sys.setenv(OPENAI_API_KEY = "YOUR-KEY")   # never commit your key
+create_transcription(file = file.path(data_dir, "1_alexa/alexa_cmd2.wav"), model = "whisper-1")$text
+```
+
+# References
+
+- Busquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. *Behavior Research Methods*.
+- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. *Journal of Business Research*, 121, 364–374.
+- Livingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). *PLoS ONE*, 13(5), e0196391. Data: <https://doi.org/10.5281/zenodo.1188976> (CC BY-NC-SA 4.0).
+
+**Contact:** Prof. Dr. Christian Hildebrand · University of St.Gallen (HSG) · [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch)
+
+```{r session-info}
+sessionInfo()
+```
