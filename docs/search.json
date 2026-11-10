@@ -4,7 +4,7 @@
     "href": "lab/voice_lab.html",
     "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
     "section": "",
-    "text": "How to use this notebook (50 minutes)\n\n\n\nThis is the compressed, one-afternoon version of the 5-day GSERM voice analytics course. All code is prepared. You run it, read the output, and fill in the chunks marked YOUR TURN. Each exercise has a folded solution: try first, then peek.\n\n\n\n\n\n\n\n\nBlock\nTime\nWhat you do\n\n\n\n\n0 · Setup\n3′\nLoad packages, check the audio plays\n\n\n1 · Warm-up\n5′\nThe Alexa example in R (same files as in Audacity)\n\n\n2 · Listen & look\n8′\nExercise 1: calm vs. angry, side by side and on one scale\n\n\n3 · Trim\n5′\nDetect speech onsets and cut silence\n\n\n4 · Extract & compare\n12′\nExercise 2: voiceR::autoExtract() on 32 clips\n\n\n5 · Predict & break it\n10′\nExercise 3: a speaker-independent model on all 192 clips\n\n\n6 · Bonus\n–\nMicrophones, embeddings, speech-to-text\n\n\n\nNot coding today? Read the rendered version of this page on the course website and focus on the interpretation questions."
+    "text": "How to use this notebook (50 minutes)\n\n\n\nThis is the compressed, one-afternoon version of the 5-day GSERM voice analytics course. All code is prepared. You run it, read the output, and fill in the chunks marked YOUR TURN. Each exercise has a folded solution: try first, then peek.\n\n\n\n\n\n\n\n\nBlock\nTime\nWhat you do\n\n\n\n\n0 · Setup\n3′\nLoad packages, check the audio plays\n\n\n1 · Warm-up\n5′\nThe Alexa example in R (same files as in Audacity)\n\n\n2 · Listen & look\n8′\nExercise 1: calm vs. angry, side by side and on one scale\n\n\n3 · Trim\n5′\nDetect speech onsets and cut silence\n\n\n4 · Feature Extraction\n12′\nExercise 2: voiceR::autoExtract() on 32 clips\n\n\n5 · Prediction\n10′\nExercise 3: a speaker-independent model on all 192 clips\n\n\n6 · Bonus\n–\nMicrophones, embeddings, speech-to-text\n\n\n\nNot coding today? Read the rendered version of this page on the course website and focus on the interpretation questions."
   },
   {
     "objectID": "lab/voice_lab.html#the-data",
@@ -25,7 +25,7 @@
     "href": "lab/voice_lab.html#hear-the-microphone",
     "title": "Hands-on Lab: Does Anger Sound Different from Calm?",
     "section": "Hear the microphone",
-    "text": "Hear the microphone\nSame speaker, same text, seven devices (from Busquet, Efthymiou & Hildebrand 2023). Compare the average spectra: which devices roll off the high frequencies?\n\nmic_dir   &lt;- file.path(data_dir, \"2_micTests\")\nmic_files &lt;- list.files(mic_dir, pattern = \"^[0-9]_audio.*\\\\.wav$\")\n\npar(mfrow = c(3, 3), mar = c(4, 4, 2, 1))\nfor (f in mic_files) {\n  w &lt;- readWave(file.path(mic_dir, f))\n  if (w@stereo) w &lt;- mono(w, \"left\")\n  meanspec(w, flim = c(0, 10), main = str_remove(f, \"\\\\.wav$\"), col = \"#115C2E\")\n}"
+    "text": "Hear the microphone\nSame speaker, same text, seven devices (from Busquet, Efthymiou & Hildebrand 2024). First the average spectrum of each device. Note that meanspec() rescales every panel to its own maximum, so differences in level are hidden.\n\nmic_dir   &lt;- file.path(data_dir, \"2_micTests\")\nmic_files &lt;- list.files(mic_dir, pattern = \"^[0-9]_audio.*\\\\.wav$\")\n\npar(mfrow = c(3, 3), mar = c(4, 4, 2, 1))\nfor (f in mic_files) {\n  w &lt;- readWave(file.path(mic_dir, f))\n  if (w@stereo) w &lt;- mono(w, \"left\")\n  meanspec(w, flim = c(0, 10), main = str_remove(f, \"\\\\.wav$\"), col = \"#115C2E\")\n}\n\n\n\n\n\n\n\n\nThe spectrograms below put all seven devices on one shared scale: the same time axis (0–12 s), the same frequency range (0–10 kHz) and the same colour scale in dB relative to the loudest device. Now you can see both how loud each device records and where it rolls off the high frequencies.\n\nspec_db &lt;- function(w, wl = 1024) {\n  sp &lt;- seewave::spectro(w, wl = wl, ovlp = 50, plot = FALSE, norm = FALSE, dB = NULL)\n  list(time = sp$time, freq = sp$freq, amp = sp$amp)   # linear amplitude, not normalised\n}\nmic_specs &lt;- map(set_names(mic_files, str_remove(mic_files, \"\\\\.wav$\")), function(f) {\n  w &lt;- readWave(file.path(mic_dir, f))\n  if (w@stereo) w &lt;- mono(w, \"left\")\n  spec_db(w)\n})\n\nref_max &lt;- max(map_dbl(mic_specs, ~ max(.x$amp)))   # one reference for all devices\ndb_floor &lt;- -80\nt_max &lt;- 12      # seconds, longest recording\nf_max &lt;- 10      # kHz\ncols &lt;- colorRampPalette(c(\"white\", \"#EAF4EE\", \"#249662\", \"#115C2E\", \"#3B1440\"))(64)\n\npar(mfrow = c(4, 2), mar = c(4.2, 4, 2, 1), mgp = c(2.3, 0.7, 0))\nfor (nm in names(mic_specs)) {\n  sp &lt;- mic_specs[[nm]]\n  db &lt;- pmax(20 * log10(sp$amp / ref_max + 1e-12), db_floor)\n  keep &lt;- sp$freq &lt;= f_max\n  image(sp$time, sp$freq[keep], t(db[keep, ]), col = cols, zlim = c(db_floor, 0),\n        xlim = c(0, t_max), ylim = c(0, f_max), useRaster = TRUE,\n        xlab = \"Time (s)\", ylab = \"Frequency (kHz)\", main = nm)\n}\n# shared colour legend\nplot.new(); plot.window(xlim = c(db_floor, 0), ylim = c(0, 1))\nrect(seq(db_floor, 0, length.out = 65)[-65], 0.35, seq(db_floor, 0, length.out = 65)[-1], 0.65,\n     col = cols, border = NA)\naxis(1, at = seq(db_floor, 0, 20)); title(main = \"dB relative to the loudest device\", font.main = 1)"
   },
   {
     "objectID": "lab/voice_lab.html#acoustic-features-vs.-voice-embeddings",
@@ -63,18 +63,18 @@
     "text": "Exercise 1 · Listen & look\n\n8 minutes · pairs · notebook block 2\n\nPick an actor (02, 03 or 04). Plot calm vs. angry oscillograms and spectrograms side by side.\nNow bind() the two clips and plot them on one shared scale. What appears that was hidden?\nRun timer() with threshold 5 and 10. Which onset matches what you hear?\n\nDeliverable · One sentence naming the cue that gives anger away first, and the onset threshold you would use."
   },
   {
-    "objectID": "exercises.html#exercise-2-extract-compare",
-    "href": "exercises.html#exercise-2-extract-compare",
+    "objectID": "exercises.html#exercise-2-feature-extraction",
+    "href": "exercises.html#exercise-2-feature-extraction",
     "title": "Mini exercises",
-    "section": "Exercise 2 · Extract & compare",
-    "text": "Exercise 2 · Extract & compare\n\n12 minutes · individual → pairs · notebook block 4\n\nRun voiceR::autoExtract() on the 32 trimmed clips.\nPlot pitch_mean, pitch_sd, loudness_mean and HNR_mean by emotion, then add one spectral and one temporal feature of your choice.\nCompare with the emotion-signature table from the slides, and check whether the effect holds for every actor.\n\nDeliverable · The feature family that separates calm from angry best, and one feature that surprised you.\n\n\n\n\nEmotion signatures from the slides: what theory predicts for each state."
+    "section": "Exercise 2 · Feature extraction",
+    "text": "Exercise 2 · Feature extraction\n\n12 minutes · individual → pairs · notebook block 4\n\nRun voiceR::autoExtract() on the 32 trimmed clips.\nPlot pitch_mean, pitch_sd, loudness_mean and HNR_mean by emotion, then add one spectral and one temporal feature of your choice.\nCompare with the emotion-signature table from the slides, and check whether the effect holds for every actor.\n\nDeliverable · The feature family that separates calm from angry best, and one feature that surprised you.\n\n\n\n\nEmotion signatures from the slides: what theory predicts for each state."
   },
   {
-    "objectID": "exercises.html#exercise-3-predict-break-it",
-    "href": "exercises.html#exercise-3-predict-break-it",
+    "objectID": "exercises.html#exercise-3-prediction",
+    "href": "exercises.html#exercise-3-prediction",
     "title": "Mini exercises",
-    "section": "Exercise 3 · Predict & break it",
-    "text": "Exercise 3 · Predict & break it\n\n10 minutes · pairs · notebook block 5\n\nFit a lasso on all 192 clips, holding out whole actors. Re-run with a different seed: how stable is the AUC?\nCompute AUC for female vs. male and for normal vs. strong intensity.\nName the first thing that would break if you used this model on customer-service calls.\n\nDeliverable · Your AUC, the weakest subgroup, and one validity threat for field use."
+    "section": "Exercise 3 · Prediction",
+    "text": "Exercise 3 · Prediction\n\n10 minutes · pairs · notebook block 5\n\nFit a lasso on all 192 clips, holding out whole actors. Re-run with a different seed: how stable is the AUC?\nCompute AUC for female vs. male and for normal vs. strong intensity.\nName the first thing that would break if you used this model on customer-service calls.\n\nDeliverable · Your AUC, the weakest subgroup, and one validity threat for field use."
   },
   {
     "objectID": "exercises.html#exercise-4-idea-sprint",
@@ -135,51 +135,51 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Listening to Behavior",
+    "title": "Speech Analytics Bootcamp",
     "section": "",
     "text": "Guest workshop · University of Melbourne\n  \n  Voice analytics for behavioural scientists: from acoustic features to voice agents, in one afternoon.\n  Set up before you come\n     Open the lab notebook"
   },
   {
     "objectID": "index.html#about-the-workshop",
     "href": "index.html#about-the-workshop",
-    "title": "Listening to Behavior",
+    "title": "Speech Analytics Bootcamp",
     "section": "About the workshop",
     "text": "About the workshop\nThe human voice carries what surveys and clicks miss: emotion in real time, arousal and stress, confidence, and spontaneous reactions before conscious reflection. Smart speakers, voice assistants and LLM-based voice agents now make voice data cheap to collect at scale, yet most behavioural researchers lack the tools to use it.\nThis condensed workshop introduces voice as a behavioural data layer. We cover how speech is produced, which acoustic features map onto which psychological states, and where construct validity breaks down. In the hands-on lab you work with real emotional speech (calm vs. angry speakers): you listen in Audacity, plot waveforms and spectrograms in R, extract acoustic features with voiceR, and test whether those features separate the two states. We close with voice-based conversational agents for data collection, the ethics of voice data, and a short sprint on your own research ideas. No prior voice analytics experience is needed.\n\n\n\nSame words, different meaning: two commands from a frustrated Alexa user."
   },
   {
     "objectID": "index.html#agenda",
     "href": "index.html#agenda",
-    "title": "Listening to Behavior",
+    "title": "Speech Analytics Bootcamp",
     "section": "Agenda",
-    "text": "Agenda\n\n\n\n13:00\nLectureWelcome & why voice: voice as a behavioural data layer; live demo with two Alexa commands\n\n\n13:15\nLectureTheory & measurement: speech chain and source–filter model; feature families; emotion signatures; construct validity and recording devices\n\n\n13:55\nBreakOpen the lab notebook and test your audio\n\n\n14:05\nDemoAudacity warm-up: waveforms, spectrogram view, spectra, silence and pitch edits, seven microphones\n\n\n14:15\nLabHands-on case: calm vs. angry (RAVDESS) in R: listen and look, trim, extract with voiceR, compare, predict (Exercises 1–3)\n\n\n14:55\nLectureFrom analytics to voice agents: speech-to-text, the STT → LLM → TTS loop, consent, privacy and bias\n\n\n15:15\nSprintIdea sprint & wrap-up (Exercise 4): voice as IV, DV or mediator in your own research"
+    "text": "Agenda\n\n\n\n13:00\nLectureWelcome & why voice: voice as a behavioural data layer; live demo with two Alexa commands\n\n\n13:15\nLectureTheory & measurement: speech chain and source–filter model; feature families; emotion signatures; construct validity and recording devices\n\n\n13:55\nBreakOpen the lab notebook and test your audio\n\n\n14:05\nDemoAudacity warm-up: waveforms, spectrogram view, spectra, silence and pitch edits, seven microphones\n\n\n14:15\nLabHands-on case: calm vs. angry (RAVDESS) in R: listen and look, trim, extract with voiceR, compare, predict (Exercises 1–3: listen & look, feature extraction, prediction)\n\n\n14:55\nLectureFrom analytics to voice agents: speech-to-text, the STT → LLM → TTS loop, consent, privacy and bias\n\n\n15:15\nSprintIdea sprint & wrap-up (Exercise 4): voice as IV, DV or mediator in your own research"
   },
   {
     "objectID": "index.html#learning-outcomes",
     "href": "index.html#learning-outcomes",
-    "title": "Listening to Behavior",
+    "title": "Speech Analytics Bootcamp",
     "section": "Learning outcomes",
     "text": "Learning outcomes\n\n 01Argue for voiceExplain why voice is a distinct behavioural data source and where it adds value over text and self-report.\n 02Map features to constructsLink pitch, loudness, spectral, voice-quality and timing features to psychological states, and name the main validity threats.\n 03Run a minimal pipelineLoad audio, plot waveforms and spectrograms, trim, extract features and compare conditions in R.\n 04Design with voiceSketch how voice enters your own studies as IV, DV or mediator, including via voice agents."
   },
   {
-    "objectID": "index.html#facilitator",
-    "href": "index.html#facilitator",
-    "title": "Listening to Behavior",
-    "section": "Facilitator",
-    "text": "Facilitator\nChristian Hildebrand is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods. Contact: christian.hildebrand@unisg.ch\nThis is the one-afternoon version of the 5-day GSERM course “Voice Analytics for Behavioral Scientists”."
+    "objectID": "index.html#instructor",
+    "href": "index.html#instructor",
+    "title": "Speech Analytics Bootcamp",
+    "section": "Instructor",
+    "text": "Instructor\nChristian Hildebrand is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods. Contact: christian.hildebrand@unisg.ch\nThis is the one-afternoon version of the 5-day GSERM course “Voice Analytics for Behavioral Scientists”."
   },
   {
     "objectID": "materials.html",
     "href": "materials.html",
     "title": "Materials",
     "section": "",
-    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3; debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
+    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3 (listen & look, feature extraction, prediction); debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
   },
   {
     "objectID": "materials.html#slides",
     "href": "materials.html#slides",
     "title": "Materials",
     "section": "",
-    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3; debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
+    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3 (listen & look, feature extraction, prediction); debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
   },
   {
     "objectID": "materials.html#lab-notebook",
@@ -200,21 +200,21 @@
     "href": "resources.html",
     "title": "Readings & resources",
     "section": "",
-    "text": "Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. Journal of Business Research, 121, 364–374.\nBusquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. Behavior Research Methods.\nHildebrand, C., Cascio Rizzo, G. L., & Berger, J. (forthcoming). The machine between us: How AI shapes the way we speak. Current Opinion in Psychology."
+    "text": "Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (2026). The machine between us: How AI shapes the way we speak. Current Opinion in Psychology.\nHildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. Journal of Business Research, 121, 364–374.\nBusquet, F., Efthymiou, F., & Hildebrand, C. (2024). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. Behavior Research Methods, 56(3), 2114–2134. (Open access)"
   },
   {
     "objectID": "resources.html#recommended-readings",
     "href": "resources.html#recommended-readings",
     "title": "Readings & resources",
     "section": "",
-    "text": "Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. Journal of Business Research, 121, 364–374.\nBusquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. Behavior Research Methods.\nHildebrand, C., Cascio Rizzo, G. L., & Berger, J. (forthcoming). The machine between us: How AI shapes the way we speak. Current Opinion in Psychology."
+    "text": "Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (2026). The machine between us: How AI shapes the way we speak. Current Opinion in Psychology.\nHildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. Journal of Business Research, 121, 364–374.\nBusquet, F., Efthymiou, F., & Hildebrand, C. (2024). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. Behavior Research Methods, 56(3), 2114–2134. (Open access)"
   },
   {
     "objectID": "resources.html#further-reading-from-the-slides",
     "href": "resources.html#further-reading-from-the-slides",
     "title": "Readings & resources",
     "section": "Further reading from the slides",
-    "text": "Further reading from the slides\n\nEfthymiou, F., Hildebrand, C., et al. (2023). The power of AI-generated voices: How digital vocal tract length shapes product congruency and ad performance.\nScherer, K. R., Johnstone, T., & Klasmeyer, G. (2003). Vocal expression of emotion. In Handbook of Affective Sciences. Oxford University Press.\nFant, G. (1960). Acoustic Theory of Speech Production. Mouton.\nBerger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes: Using text for marketing insight. Journal of Marketing, 84(1), 1–25.\nJurafsky, D., & Martin, J. H. Speech and Language Processing (3rd ed. draft). https://web.stanford.edu/~jurafsky/slp3/\nLivingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). PLoS ONE, 13(5), e0196391."
+    "text": "Further reading from the slides\n\nEfthymiou, F., Hildebrand, C., de Bellis, E., & Hampton, W. H. (2024). The power of AI-generated voices: How digital vocal tract length shapes product congruency and ad performance. Journal of Interactive Marketing, 59(2), 117–134.\nBerger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes: Using text for marketing insight. Journal of Marketing, 84(1), 1–25.\nLivingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). PLoS ONE, 13(5), e0196391. Data: Zenodo.\nScherer, K. R., Johnstone, T., & Klasmeyer, G. (2003). Vocal expression of emotion. In R. J. Davidson, K. R. Scherer & H. H. Goldsmith (Eds.), Handbook of Affective Sciences (pp. 433–456). Oxford University Press.\nFant, G. (1960). Acoustic Theory of Speech Production. Mouton.\nJurafsky, D., & Martin, J. H. Speech and Language Processing (3rd ed. draft). https://web.stanford.edu/~jurafsky/slp3/"
   },
   {
     "objectID": "resources.html#tools",
@@ -228,6 +228,6 @@
     "href": "resources.html#going-further",
     "title": "Readings & resources",
     "section": "Going further",
-    "text": "Going further\nThis afternoon is the compressed version of the 5-day GSERM course Voice Analytics for Behavioral Scientists, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: christian.hildebrand@unisg.ch."
+    "text": "Going further\nThe Speech Analytics Bootcamp is the compressed version of the 5-day GSERM course Voice Analytics for Behavioral Scientists, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: christian.hildebrand@unisg.ch."
   }
 ]
