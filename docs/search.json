@@ -130,7 +130,7 @@
     "href": "setup.html#whats-in-the-folder",
     "title": "Setup",
     "section": "What’s in the folder",
-    "text": "What’s in the folder\n\n\n\n\n\n\n\nFolder\nContent\n\n\n\n\nslides/\nWorkshop slides (PowerPoint and PDF); the ▶ links in the slides play the audio in data/\n\n\nlab/voice_lab.qmd\nThe hands-on notebook (Quarto; opens and runs like an R Markdown file in RStudio)\n\n\ndata/1_alexa/\nThe frustrated Alexa user: two commands and three wake words\n\n\ndata/2_micTests/\nOne speaker recorded on seven devices, plus two breathing samples\n\n\ndata/3_ravdess/\n32 RAVDESS clips (actors 01–04, calm vs. angry)\n\n\ndata/ravdess_features.csv\nAcoustic features for all 192 calm/angry clips (24 actors)\n\n\ndata/ravdess_embeddings.csv\n768-dimensional voice embeddings for the same clips\n\n\nscripts/get_full_ravdess.R\nDownloads the full 192 clips from Zenodo, if you want to extract everything yourself"
+    "text": "What’s in the folder\n\n\n\n\n\n\n\nFolder\nContent\n\n\n\n\nslides/\nWorkshop slides (PDF)\n\n\nlab/voice_lab.qmd\nThe hands-on notebook (Quarto; opens and runs like an R Markdown file in RStudio)\n\n\ndata/1_alexa/\nThe frustrated Alexa user: two commands and three wake words\n\n\ndata/2_micTests/\nOne speaker recorded on seven devices, plus two breathing samples\n\n\ndata/3_ravdess/\n32 RAVDESS clips (actors 01–04, calm vs. angry)\n\n\ndata/ravdess_features.csv\nAcoustic features for all 192 calm/angry clips (24 actors)\n\n\ndata/ravdess_embeddings.csv\n768-dimensional voice embeddings for the same clips\n\n\nscripts/get_full_ravdess.R\nDownloads the full 192 clips from Zenodo, if you want to extract everything yourself"
   },
   {
     "objectID": "index.html",
@@ -165,21 +165,21 @@
     "href": "index.html#instructor",
     "title": "Speech Analytics Bootcamp",
     "section": "Instructor",
-    "text": "Instructor\nChristian Hildebrand is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods. Contact: christian.hildebrand@unisg.ch\nThis is the one-afternoon version of the 5-day GSERM course “Voice Analytics for Behavioral Scientists”."
+    "text": "Instructor\nChristian Hildebrand is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods.\nIBT-HSG profile · CUHK Business School profile · christian.hildebrand@unisg.ch"
   },
   {
     "objectID": "materials.html",
     "href": "materials.html",
     "title": "Materials",
     "section": "",
-    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3 (listen & look, feature extraction, prediction); debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
+    "text": "Slides (PDF)\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nMotivation; self-report vs. voice analytics; what voice can tell us; live demos; three ways to think about voice\n\n\n2 · Theory & measurement\nTheory foundations; speech chain; four feature families; emotion signatures; theory → measurement; terminology; recording devices and guidelines; validity threats\n\n\n3 · Hands-on lab\nAudacity warm-up; why R; the voice analytics pipeline; voiceR; lab roadmap; Exercises 1–3; debrief\n\n\n4 · Extension: voice agents\nSpeech-to-text; anatomy of a voice agent; consent, privacy and bias; idea sprint (Exercise 4)"
   },
   {
     "objectID": "materials.html#slides",
     "href": "materials.html#slides",
     "title": "Materials",
     "section": "",
-    "text": "Slides (PDF) Slides (PowerPoint)\nThe PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nStates, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator\n\n\n2 · Theory & measurement\nSpeech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices\n\n\n3 · Hands-on lab\nAudacity warm-up; lab roadmap; Exercises 1–3 (listen & look, feature extraction, prediction); debrief\n\n\n4 · Voice agents\nSpeech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint"
+    "text": "Slides (PDF)\n\n\n\n\n\n\n\nPart\nContent\n\n\n\n\n1 · Why voice?\nMotivation; self-report vs. voice analytics; what voice can tell us; live demos; three ways to think about voice\n\n\n2 · Theory & measurement\nTheory foundations; speech chain; four feature families; emotion signatures; theory → measurement; terminology; recording devices and guidelines; validity threats\n\n\n3 · Hands-on lab\nAudacity warm-up; why R; the voice analytics pipeline; voiceR; lab roadmap; Exercises 1–3; debrief\n\n\n4 · Extension: voice agents\nSpeech-to-text; anatomy of a voice agent; consent, privacy and bias; idea sprint (Exercise 4)"
   },
   {
     "objectID": "materials.html#lab-notebook",
@@ -228,6 +228,6 @@
     "href": "resources.html#going-further",
     "title": "Readings & resources",
     "section": "Going further",
-    "text": "Going further\nThe Speech Analytics Bootcamp is the compressed version of the 5-day GSERM course Voice Analytics for Behavioral Scientists, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: christian.hildebrand@unisg.ch."
+    "text": "Going further\nGet in touch if you would like to collaborate or bring the full course to your institution: christian.hildebrand@unisg.ch."
   }
 ]
