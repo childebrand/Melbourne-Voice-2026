@@ -1,5 +1,5 @@
 # Download the full RAVDESS speech set and keep the 192 calm/angry "Kids are talking by the door" clips
-# used in the workshop (24 actors x 2 emotions x 2 intensities x 2 repetitions).
+# used in the Speech Analytics Bootcamp (24 actors x 2 emotions x 2 intensities x 2 repetitions).
 # Source: Livingstone & Russo (2018), https://doi.org/10.5281/zenodo.1188976 (CC BY-NC-SA 4.0)
 # The zip is ~210 MB. Run from the repository root.
 
