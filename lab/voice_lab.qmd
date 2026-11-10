@@ -1,6 +1,6 @@
 ---
 title: "Hands-on Lab: Does Anger Sound Different from Calm?"
-subtitle: "Listening to Behavior · Voice Analytics Mini-Workshop · University of Melbourne, 11 Nov 2026"
+subtitle: "Speech Analytics Bootcamp · University of Melbourne, 11 Nov 2026"
 author: "Prof. Dr. Christian Hildebrand"
 format:
   html:
@@ -26,8 +26,8 @@ This is the compressed, one-afternoon version of the 5-day GSERM voice analytics
 | 1 · Warm-up | 5′ | The Alexa example in R (same files as in Audacity) |
 | 2 · Listen & look | 8′ | **Exercise 1**: calm vs. angry, side by side and on one scale |
 | 3 · Trim | 5′ | Detect speech onsets and cut silence |
-| 4 · Extract & compare | 12′ | **Exercise 2**: `voiceR::autoExtract()` on 32 clips |
-| 5 · Predict & break it | 10′ | **Exercise 3**: a speaker-independent model on all 192 clips |
+| 4 · Feature Extraction | 12′ | **Exercise 2**: `voiceR::autoExtract()` on 32 clips |
+| 5 · Prediction | 10′ | **Exercise 3**: a speaker-independent model on all 192 clips |
 | 6 · Bonus | – | Microphones, embeddings, speech-to-text |
 
 Not coding today? Read the rendered version of this page on the course website and focus on the interpretation questions.
@@ -199,7 +199,7 @@ tibble(file = emo_files,
   summarise(mean_raw = mean(raw_s), mean_trimmed = mean(trimmed_s))
 ```
 
-# 4 · Extract & compare (Exercise 2)
+# 4 · Feature Extraction (Exercise 2)
 
 `voiceR::autoExtract()` runs the full `soundgen` feature set over a list of recordings and reads the design from the filename. RAVDESS uses `-` as separator; we tell `voiceR` which positions hold the condition (emotion) and the speaker ID, and mark the rest `Null`. With 32 short clips this takes about 1–2 minutes. If `voiceR` is missing or incompatible with your `soundgen` version, the chunk falls back to `soundgen::analyze()`, the engine `voiceR` uses, and you get the same feature names.
 
@@ -249,7 +249,7 @@ feats %>%
 ```
 
 ::: {.callout-important}
-## Exercise 2 · Extract & compare (12 minutes, individual → pairs)
+## Exercise 2 · Feature extraction (12 minutes, individual → pairs)
 1. Recall the emotion-signature table from the slides: anger should show **high F0** and **high intensity**. Does it here?
 2. Pick **two more features** from `names(feats)`, one spectral (e.g. `specCentroid_mean`, `entropy_mean`) and one temporal (e.g. `voiced`, `duration`). Plot them by emotion.
 3. Compute the mean difference (angry − calm) **within each actor**. Is the effect consistent across all four speakers?
@@ -279,7 +279,7 @@ feats %>%
 Pitch and spectral centroid rise and HNR falls (a harsher voice) for all four actors. Loudness is the surprise: it goes up for two actors and down for two. Recording level and normalisation decide what amplitude means, so check that the level was held constant before you interpret it.
 :::
 
-# 5 · Predict & break it (Exercise 3)
+# 5 · Prediction (Exercise 3)
 
 Now the full corpus: 192 clips, 24 actors, ~108 features (extracted with exactly the code above on the trimmed files).
 
@@ -319,7 +319,7 @@ tibble(feature = rownames(co)[-1], coef = as.numeric(co[-1])) %>%
 ```
 
 ::: {.callout-important}
-## Exercise 3 · Predict & break it (10 minutes, pairs)
+## Exercise 3 · Prediction (10 minutes, pairs)
 1. Re-run the model with a **different seed** for the held-out actors. How stable is the AUC?
 2. **Break it down:** compute AUC separately for female vs. male and for normal vs. strong intensity in the test set.
 3. Discuss: name the first thing that would break if you ran this model on customer-service calls.
@@ -348,11 +348,11 @@ bind_rows(
 Near-perfect AUC is expected: this is **acted**, studio-recorded speech with one fixed sentence. Subtle (normal-intensity) anger is the harder case. In the field, expect different microphones and rooms, spontaneous speech, varying words and accents: validate on that data before making any claim.
 :::
 
-# 6 · Bonus (if you finish early)
+# 6 · Bonus
 
 ## Hear the microphone
 
-Same speaker, same text, seven devices (from Busquet, Efthymiou & Hildebrand 2023). Compare the average spectra: which devices roll off the high frequencies?
+Same speaker, same text, seven devices (from [Busquet, Efthymiou & Hildebrand 2024](https://doi.org/10.3758/s13428-023-02139-9)). First the average spectrum of each device. Note that `meanspec()` rescales every panel to its own maximum, so differences in level are hidden.
 
 ```{r mic-spectra, fig.height=6}
 mic_dir   <- file.path(data_dir, "2_micTests")
@@ -364,6 +364,41 @@ for (f in mic_files) {
   if (w@stereo) w <- mono(w, "left")
   meanspec(w, flim = c(0, 10), main = str_remove(f, "\\.wav$"), col = "#115C2E")
 }
+```
+
+The spectrograms below put all seven devices on **one shared scale**: the same time axis (0–12 s), the same frequency range (0–10 kHz) and the same colour scale in dB relative to the loudest device. Now you can see both how loud each device records and where it rolls off the high frequencies.
+
+```{r mic-spectrograms, fig.height=9}
+spec_db <- function(w, wl = 1024) {
+  sp <- seewave::spectro(w, wl = wl, ovlp = 50, plot = FALSE, norm = FALSE, dB = NULL)
+  list(time = sp$time, freq = sp$freq, amp = sp$amp)   # linear amplitude, not normalised
+}
+mic_specs <- map(set_names(mic_files, str_remove(mic_files, "\\.wav$")), function(f) {
+  w <- readWave(file.path(mic_dir, f))
+  if (w@stereo) w <- mono(w, "left")
+  spec_db(w)
+})
+
+ref_max <- max(map_dbl(mic_specs, ~ max(.x$amp)))   # one reference for all devices
+db_floor <- -80
+t_max <- 12      # seconds, longest recording
+f_max <- 10      # kHz
+cols <- colorRampPalette(c("white", "#EAF4EE", "#249662", "#115C2E", "#3B1440"))(64)
+
+par(mfrow = c(4, 2), mar = c(4.2, 4, 2, 1), mgp = c(2.3, 0.7, 0))
+for (nm in names(mic_specs)) {
+  sp <- mic_specs[[nm]]
+  db <- pmax(20 * log10(sp$amp / ref_max + 1e-12), db_floor)
+  keep <- sp$freq <= f_max
+  image(sp$time, sp$freq[keep], t(db[keep, ]), col = cols, zlim = c(db_floor, 0),
+        xlim = c(0, t_max), ylim = c(0, f_max), useRaster = TRUE,
+        xlab = "Time (s)", ylab = "Frequency (kHz)", main = nm)
+}
+# shared colour legend
+plot.new(); plot.window(xlim = c(db_floor, 0), ylim = c(0, 1))
+rect(seq(db_floor, 0, length.out = 65)[-65], 0.35, seq(db_floor, 0, length.out = 65)[-1], 0.65,
+     col = cols, border = NA)
+axis(1, at = seq(db_floor, 0, 20)); title(main = "dB relative to the loudest device", font.main = 1)
 ```
 
 ## Acoustic features vs. voice embeddings
@@ -395,9 +430,10 @@ create_transcription(file = file.path(data_dir, "1_alexa/alexa_cmd2.wav"), model
 
 # References
 
-- Busquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. *Behavior Research Methods*.
-- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. *Journal of Business Research*, 121, 364–374.
-- Livingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). *PLoS ONE*, 13(5), e0196391. Data: <https://doi.org/10.5281/zenodo.1188976> (CC BY-NC-SA 4.0).
+- Busquet, F., Efthymiou, F., & Hildebrand, C. (2024). [Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices](https://doi.org/10.3758/s13428-023-02139-9). *Behavior Research Methods*, 56(3), 2114–2134.
+- Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (2026). [The machine between us: How AI shapes the way we speak](https://www.sciencedirect.com/science/article/pii/S2352250X26002216). *Current Opinion in Psychology*.
+- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). [Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications](https://doi.org/10.1016/j.jbusres.2020.09.020). *Journal of Business Research*, 121, 364–374.
+- Livingstone, S. R., & Russo, F. A. (2018). [The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS)](https://doi.org/10.1371/journal.pone.0196391). *PLoS ONE*, 13(5), e0196391. Data: <https://doi.org/10.5281/zenodo.1188976> (CC BY-NC-SA 4.0).
 
 **Contact:** Prof. Dr. Christian Hildebrand · University of St.Gallen (HSG) · [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch)
 
