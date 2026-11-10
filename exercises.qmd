@@ -34,7 +34,7 @@ Four short exercises carry you from listening to a research design. Exercises 1�
 </div>
 ```
 
-## Exercise 2 · Extract & compare
+## Exercise 2 · Feature extraction
 
 ```{=html}
 <div class="exercise">
@@ -50,7 +50,7 @@ Four short exercises carry you from listening to a research design. Exercises 1�
 
 ![Emotion signatures from the slides: what theory predicts for each state.](assets/emotion_signatures.png){width=70%}
 
-## Exercise 3 · Predict & break it
+## Exercise 3 · Prediction
 
 ```{=html}
 <div class="exercise">

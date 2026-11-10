@@ -1,6 +1,6 @@
 ---
 title: "Setup"
-subtitle: "Ten minutes before the workshop saves twenty minutes during it"
+subtitle: "Speech Analytics Bootcamp · ten minutes before the session saves twenty during it"
 ---
 
 ## What to bring

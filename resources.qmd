@@ -4,18 +4,18 @@ title: "Readings & resources"
 
 ## Recommended readings
 
-- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. *Journal of Business Research*, 121, 364–374.
-- Busquet, F., Efthymiou, F., & Hildebrand, C. (2023). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. *Behavior Research Methods*.
-- Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (forthcoming). The machine between us: How AI shapes the way we speak. *Current Opinion in Psychology*.
+- Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (2026). [The machine between us: How AI shapes the way we speak](https://www.sciencedirect.com/science/article/pii/S2352250X26002216). *Current Opinion in Psychology*.
+- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). [Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications](https://doi.org/10.1016/j.jbusres.2020.09.020). *Journal of Business Research*, 121, 364–374.
+- Busquet, F., Efthymiou, F., & Hildebrand, C. (2024). [Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices](https://doi.org/10.3758/s13428-023-02139-9). *Behavior Research Methods*, 56(3), 2114–2134. (Open access)
 
 ## Further reading from the slides
 
-- Efthymiou, F., Hildebrand, C., et al. (2023). The power of AI-generated voices: How digital vocal tract length shapes product congruency and ad performance.
-- Scherer, K. R., Johnstone, T., & Klasmeyer, G. (2003). Vocal expression of emotion. In *Handbook of Affective Sciences*. Oxford University Press.
+- Efthymiou, F., Hildebrand, C., de Bellis, E., & Hampton, W. H. (2024). [The power of AI-generated voices: How digital vocal tract length shapes product congruency and ad performance](https://doi.org/10.1177/10949968231194905). *Journal of Interactive Marketing*, 59(2), 117–134.
+- Berger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). [Uniting the tribes: Using text for marketing insight](https://doi.org/10.1177/0022242919873106). *Journal of Marketing*, 84(1), 1–25.
+- Livingstone, S. R., & Russo, F. A. (2018). [The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS)](https://doi.org/10.1371/journal.pone.0196391). *PLoS ONE*, 13(5), e0196391. Data: [Zenodo](https://doi.org/10.5281/zenodo.1188976).
+- Scherer, K. R., Johnstone, T., & Klasmeyer, G. (2003). Vocal expression of emotion. In R. J. Davidson, K. R. Scherer & H. H. Goldsmith (Eds.), *Handbook of Affective Sciences* (pp. 433–456). Oxford University Press.
 - Fant, G. (1960). *Acoustic Theory of Speech Production*. Mouton.
-- Berger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes: Using text for marketing insight. *Journal of Marketing*, 84(1), 1–25.
 - Jurafsky, D., & Martin, J. H. *Speech and Language Processing* (3rd ed. draft). <https://web.stanford.edu/~jurafsky/slp3/>
-- Livingstone, S. R., & Russo, F. A. (2018). The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS). *PLoS ONE*, 13(5), e0196391.
 
 ## Tools
 
@@ -29,4 +29,4 @@ title: "Readings & resources"
 
 ## Going further
 
-This afternoon is the compressed version of the 5-day GSERM course *Voice Analytics for Behavioral Scientists*, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch).
+The Speech Analytics Bootcamp is the compressed version of the 5-day GSERM course *Voice Analytics for Behavioral Scientists*, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch).

@@ -1,7 +1,7 @@
-# Listening to Behavior: Voice Analytics Mini-Workshop
+# Speech Analytics Bootcamp
 
 **Guest workshop · University of Melbourne · Wednesday, 11 November 2026, 13:00–15:30**
-Prof. Dr. Christian Hildebrand, University of St.Gallen (HSG)
+Instructor: Prof. Dr. Christian Hildebrand, University of St.Gallen (HSG)
 
 Course website: **https://childebrand.github.io/Melbourne-Voice-2026/**
 
@@ -40,9 +40,15 @@ quarto render          # renders all pages and the notebook into docs/
 
 GitHub Pages: *Settings → Pages → Deploy from a branch → `main` / `docs`*.
 
+## Readings
+
+- Hildebrand, C., Cascio Rizzo, G. L., & Berger, J. (2026). The machine between us: How AI shapes the way we speak. *Current Opinion in Psychology*. <https://www.sciencedirect.com/science/article/pii/S2352250X26002216>
+- Hildebrand, C., Efthymiou, F., Busquet, F., Hampton, W. H., Hoffman, D. L., & Novak, T. P. (2020). Voice analytics in business research: Conceptual foundations, acoustic feature extraction, and applications. *Journal of Business Research*, 121, 364–374. <https://doi.org/10.1016/j.jbusres.2020.09.020>
+- Busquet, F., Efthymiou, F., & Hildebrand, C. (2024). Voice analytics in the wild: Validity and predictive accuracy of common audio-recording devices. *Behavior Research Methods*, 56(3), 2114–2134. <https://doi.org/10.3758/s13428-023-02139-9>
+
 ## Data and licences
 
 - RAVDESS: Livingstone, S. R., & Russo, F. A. (2018). *PLoS ONE*, 13(5), e0196391. <https://doi.org/10.5281/zenodo.1188976>. CC BY-NC-SA 4.0; the subset is redistributed for non-commercial teaching under the same licence.
-- Alexa and microphone recordings: workshop materials from Hildebrand et al. (2020, *Journal of Business Research*) and Busquet, Efthymiou & Hildebrand (2023, *Behavior Research Methods*).
+- Alexa and microphone recordings: workshop materials from Hildebrand et al. (2020, *Journal of Business Research*) and Busquet, Efthymiou & Hildebrand (2024, *Behavior Research Methods*).
 
 Contact: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch)

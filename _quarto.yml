@@ -17,7 +17,7 @@ execute:
   freeze: auto
 
 website:
-  title: "Listening to Behavior"
+  title: "Speech Analytics Bootcamp"
   site-url: "https://childebrand.github.io/Melbourne-Voice-2026/"
   repo-url: "https://github.com/childebrand/Melbourne-Voice-2026"
   repo-actions: [source]
@@ -41,7 +41,7 @@ website:
       - icon: github
         href: "https://github.com/childebrand/Melbourne-Voice-2026"
   page-footer:
-    left: "Voice Analytics Mini-Workshop · University of Melbourne · 11 Nov 2026"
+    left: "Speech Analytics Bootcamp · University of Melbourne · 11 Nov 2026"
     right: "Prof. Dr. Christian Hildebrand · University of St.Gallen (HSG)"
 
 format:
