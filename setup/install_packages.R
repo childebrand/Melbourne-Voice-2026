@@ -1,4 +1,4 @@
-# Listening to Behavior · Voice Analytics Mini-Workshop (University of Melbourne, 11 Nov 2026)
+# Speech Analytics Bootcamp (University of Melbourne, 11 Nov 2026)
 # Run this once BEFORE the workshop (takes 5-10 minutes). R >= 4.1 and RStudio recommended.
 
 options(repos = "https://cloud.r-project.org")
