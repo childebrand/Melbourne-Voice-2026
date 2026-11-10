@@ -59,7 +59,7 @@ Run `tuneR::setWavPlayer("/usr/bin/afplay")` once, then `listen()` works.
 
 | Folder | Content |
 |---|---|
-| `slides/` | Workshop slides (PowerPoint and PDF); the ▶ links in the slides play the audio in `data/` |
+| `slides/` | Workshop slides (PDF) |
 | `lab/voice_lab.qmd` | The hands-on notebook (Quarto; opens and runs like an R Markdown file in RStudio) |
 | `data/1_alexa/` | The frustrated Alexa user: two commands and three wake words |
 | `data/2_micTests/` | One speaker recorded on seven devices, plus two breathing samples |

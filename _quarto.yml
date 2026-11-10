@@ -10,7 +10,6 @@ project:
     - lab/voice_lab.qmd
   resources:
     - slides/*.pdf
-    - slides/*.pptx
     - assets/*
 
 execute:

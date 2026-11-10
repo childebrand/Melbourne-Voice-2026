@@ -29,4 +29,4 @@ title: "Readings & resources"
 
 ## Going further
 
-The Speech Analytics Bootcamp is the compressed version of the 5-day GSERM course *Voice Analytics for Behavioral Scientists*, which adds device validation, denoising and VAD, speech-to-text and linguistic features, audio embeddings, voice-agent building, and evaluation and fairness. Get in touch if you would like to collaborate or bring the full course to your institution: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch).
+Get in touch if you would like to collaborate or bring the full course to your institution: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch).

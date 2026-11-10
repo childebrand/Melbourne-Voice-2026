@@ -4,17 +4,14 @@ title: "Materials"
 
 ## Slides
 
-<a class="btn-hsg" href="slides/Melbourne_VoiceAnalytics_Slides.pdf">Slides (PDF)</a>
-<a class="btn-hsg alt" href="slides/Melbourne_VoiceAnalytics_Slides.pptx">Slides (PowerPoint)</a>
-
-The PowerPoint version includes speaker notes and ▶ links that play the workshop audio when the deck sits in the downloaded folder.
+<a class="btn-hsg" href="slides/Melbourne_SpeechAnalytics2026_Slides.pdf">Slides (PDF)</a>
 
 | Part | Content |
 |---|---|
-| 1 · Why voice? | States, traits and attributions; live Alexa demo; self-report vs. voice; voice as IV, DV or mediator |
-| 2 · Theory & measurement | Speech chain; source–filter model; four feature families; emotion signatures; theory → measurement; validity threats; recording devices |
-| 3 · Hands-on lab | Audacity warm-up; lab roadmap; Exercises 1–3 (listen & look, feature extraction, prediction); debrief |
-| 4 · Voice agents | Speech-to-text and linguistic features; the agent loop; consent, privacy and bias; idea sprint |
+| 1 · Why voice? | Motivation; self-report vs. voice analytics; what voice can tell us; live demos; three ways to think about voice |
+| 2 · Theory & measurement | Theory foundations; speech chain; four feature families; emotion signatures; theory → measurement; terminology; recording devices and guidelines; validity threats |
+| 3 · Hands-on lab | Audacity warm-up; why R; the voice analytics pipeline; voiceR; lab roadmap; Exercises 1–3; debrief |
+| 4 · Extension: voice agents | Speech-to-text; anatomy of a voice agent; consent, privacy and bias; idea sprint (Exercise 4) |
 
 ## Lab notebook
 

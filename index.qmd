@@ -60,6 +60,6 @@ This condensed workshop introduces voice as a behavioural data layer. We cover h
 
 ## Instructor
 
-**Christian Hildebrand** is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods. Contact: [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch)
+**Christian Hildebrand** is Full Professor of Marketing Analytics and Vice Dean at the University of St.Gallen (HSG), Executive Director of the Institute of Behavioral Science & Technology, and Visiting Professor at CUHK. His research examines consumer behaviour in interactions with AI, with a focus on voice, conversational agents and new behavioural methods.
 
-*This is the one-afternoon version of the 5-day GSERM course “Voice Analytics for Behavioral Scientists”.*
+[IBT-HSG profile](https://ibt.unisg.ch/about-us/team/christian-hildebrand/) · [CUHK Business School profile](https://www.bschool.cuhk.edu.hk/staff/hildebrand-christian/) · [christian.hildebrand@unisg.ch](mailto:christian.hildebrand@unisg.ch)

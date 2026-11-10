@@ -18,7 +18,7 @@ A hands-on introduction to voice analytics for behavioural research: how speech 
 
 | Path | What |
 |---|---|
-| `slides/` | Slides (PowerPoint with speaker notes and audio links; PDF) |
+| `slides/` | Slides (PDF) |
 | `lab/voice_lab.qmd` | Hands-on notebook with Exercises 1–3 and folded solutions |
 | `data/1_alexa/` | Frustrated Alexa user: two commands and three wake words |
 | `data/2_micTests/` | One speaker on seven recording devices, plus breathing samples |
